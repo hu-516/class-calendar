@@ -28,6 +28,7 @@
   （appId 变化会改变安装标识，装过旧版本的话先卸载再装）。
 - 新增开发钩子 `CLASS_CALENDAR_DATA_DIR`：把数据目录指到别处，方便用示例数据做截图或演示。
 - 作者署名统一为 `hu-516`（`LICENSE` 版权行、`package.json` 的 `author`、README 许可证一节）。
+- README 顶部增加 Release 下载入口；仓库添加 topics（electron / windows / widget / icalendar / timetable / desktop-app）。
 
 **安装包**：要发布时执行 `npm run dist` 生成 `dist\课程日程表-Setup-1.0.2.exe`（本次未重新打包）。
 

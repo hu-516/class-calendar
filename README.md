@@ -5,6 +5,10 @@
 
 **版本 1.0.2** ｜ Windows 10 / 11（64 位）｜ Electron + 原生 HTML/CSS/JS ｜ 纯本地、不联网
 
+**下载安装**：到 [Releases 页面](https://github.com/hu-516/class-calendar/releases/latest) 下载
+`class-calendar-Setup-<版本>.exe`，双击即可安装（按当前用户安装，**不需要管理员权限**；
+免安装版与源码运行方式见「三、安装方法」）。
+
 ![小卡片](docs/images/card.png)
 
 ---
