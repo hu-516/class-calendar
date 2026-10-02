@@ -1,0 +1,50 @@
+/*
+ * 主题 token —— 视觉数值全部集中在这里，换肤只改这个文件。
+ * 当前主题依据用户提供的设计图取样：
+ *   卡片底色 #FFFFFF、课程行粉底 #FCE8E8、强调红 #FF1844、
+ *   外圈紫粉渐变 #9DA5E3 -> #C9A9E6 -> #E7B4E0
+ */
+:root {
+  /* 卡片与描边 */
+  --card-bg: #ffffff;
+  --card-radius: 20px;
+  --card-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+
+  /* 表面 */
+  --surface-raised: #f7f7f9;
+  --surface-today: #fff1f4;
+  --surface-hover: rgba(17, 17, 17, 0.06);
+  --surface-border: rgba(17, 17, 17, 0.06);
+
+  /* 文字 */
+  --text-primary: #111111;
+  --text-muted: #4a4a4a;
+  --text-secondary: #8a8a8a;
+
+  /* 强调色 */
+  --accent: #ff1844;
+  --accent-strong: #ff1844;
+  --accent-soft: #fce8e8;
+  --accent-soft-strong: #ffd9e0;
+
+  /* 周课表课程块 */
+  --slot-bg: #fce8e8;
+  --slot-accent: #ff1844;
+  --scrollbar: rgba(17, 17, 17, 0.15);
+
+  /* 圆角与间距 */
+  --radius-row: 12px;
+  --radius-control: 10px;
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+
+  /* 字体 */
+  --font-ui: 'Microsoft YaHei UI', 'Microsoft YaHei', 'Source Han Sans SC',
+    'PingFang SC', system-ui, sans-serif;
+  --font-size-sm: 12px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-title: 18px;
+}

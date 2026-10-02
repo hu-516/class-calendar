@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self'; script-src 'self'"
+    />
+    <title>课程日程表</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/widget.css" />
+  </head>
+  <body>
+    <main class="card" id="card">
+      <header class="head">
+        <div class="head__left">
+          <span class="head__school" id="schoolName">我的课表</span>
+          <span class="head__sep">|</span>
+          <span class="head__date" id="headDate">--</span>
+          <span class="head__weekday" id="headWeekday">--</span>
+        </div>
+        <div class="head__right">
+          <button class="head__pin" id="pinBtn" type="button" title="置顶显示">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"
+              />
+            </svg>
+          </button>
+          <button class="head__toggle" id="expandBtn" type="button" title="展开周课表">
+            <span id="expandBtnText">展开</span>
+            <span class="head__toggle-icon" id="expandBtnIcon">▾</span>
+          </button>
+          <span class="head__week" id="weekLabel"></span>
+        </div>
+      </header>
+
+      <div class="term-editor" id="termEditor" hidden>
+        <label class="term-editor__label" for="termStartInput">第一周周一</label>
+        <input class="term-editor__input" id="termStartInput" type="date" />
+        <div class="term-editor__actions">
+          <button class="term-editor__btn" id="termAutoBtn" type="button">自动</button>
+          <button class="term-editor__btn term-editor__btn--primary" id="termSaveBtn" type="button">
+            保存
+          </button>
+        </div>
+      </div>
+
+      <div class="compact" id="compactView">
+        <div class="summary">
+          <span class="summary__text" id="summaryLine"></span>
+          <span class="summary__chip" id="summaryChip"></span>
+        </div>
+        <ul class="courses" id="courseList"></ul>
+        <p class="compact__empty" id="emptyHint" hidden></p>
+      </div>
+
+      <section class="week" id="weekView" hidden>
+        <div class="week__head">
+          <div class="week__nav">
+            <button class="week__step" id="prevWeekBtn" type="button" title="上一周">‹</button>
+            <span class="week__range" id="weekRange"></span>
+            <button class="week__step" id="nextWeekBtn" type="button" title="下一周">›</button>
+          </div>
+          <div class="week__meta">
+            <button class="week__today" id="backToWeekBtn" type="button" hidden>回到本周</button>
+            <span id="weekHint"></span>
+          </div>
+        </div>
+        <div class="week__grid" id="weekGrid"></div>
+      </section>
+
+      <footer class="foot" id="foot">
+        <span class="foot__status" id="status"></span>
+          <div class="foot__actions">
+            <button class="icon-btn" id="settingsBtn" type="button" title="打开设置">设置</button>
+            <button class="icon-btn" id="importBtn" type="button" title="导入 ICS 课表">导入</button>
+            <button class="icon-btn" id="closeBtn" type="button" title="退出">✕</button>
+          </div>
+      </footer>
+    </main>
+    <script src="js/widget.js"></script>
+  </body>
+</html>

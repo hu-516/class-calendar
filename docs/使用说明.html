@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>课程日程表 · 使用说明</title>
+    <style>
+      :root {
+        --accent: #ff1844;
+        --text: #111111;
+        --muted: #4a4a4a;
+        --soft: #8a8a8a;
+        --line: #ececf0;
+        --bg: #fafafb;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 20px 80px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'Source Han Sans SC', system-ui,
+          sans-serif;
+        font-size: 15px;
+        line-height: 1.75;
+      }
+      main {
+        max-width: 820px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 18px;
+        padding: 40px 44px 48px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.07);
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 27px;
+      }
+      h2 {
+        margin: 38px 0 12px;
+        font-size: 19px;
+        padding-left: 11px;
+        border-left: 4px solid var(--accent);
+      }
+      h3 {
+        margin: 24px 0 8px;
+        font-size: 16px;
+      }
+      .lead {
+        color: var(--muted);
+        margin: 0 0 4px;
+      }
+      .meta {
+        color: var(--soft);
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 26px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f7f7f9;
+        font-weight: 600;
+      }
+      code {
+        background: #f4f4f6;
+        padding: 2px 6px;
+        border-radius: 5px;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 13px;
+      }
+      figure {
+        margin: 16px 0;
+      }
+      figure img {
+        max-width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      }
+      figcaption {
+        color: var(--soft);
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .note {
+        background: #fff6f8;
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: var(--muted);
+        margin: 14px 0;
+      }
+      .faq dt {
+        font-weight: 600;
+        margin-top: 14px;
+      }
+      .faq dd {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+      ol,
+      ul {
+        padding-left: 22px;
+      }
+      li + li {
+        margin-top: 4px;
+      }
+      @media print {
+        body {
+          background: #fff;
+          padding: 0;
+        }
+        main {
+          box-shadow: none;
+          border-radius: 0;
+          padding: 0;
+          max-width: none;
+        }
+        h2 {
+          break-after: avoid;
+        }
+        figure {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>课程日程表 · 使用说明</h1>
+      <p class="lead">
+        一个悬浮在 Windows 桌面上的课程表小组件：导入教务系统的课表文件后，随时能看到今天有什么课、
+        下一节几点开始，也可以展开看整周课表。它默认待在桌面层，不会挡在别的软件上面。
+      </p>
+      <p class="meta">版本 1.0.2 ｜ 适用于 Windows 10 / 11（64 位）</p>
+
+      <hr />
+
+      <h2>一、安装</h2>
+      <ol>
+        <li>把安装包 <code>课程日程表-Setup-1.0.2.exe</code> 拷到目标电脑。</li>
+        <li>
+          双击运行。若弹出蓝色的「Windows 已保护你的电脑」，点 <b>更多信息</b> →
+          <b>仍要运行</b>（安装包没有购买代码签名证书，属正常提示）。
+        </li>
+        <li>安装向导里可以改安装位置，也可以直接用默认位置，点「安装」。</li>
+        <li>装完会自动创建<b>桌面快捷方式</b>和<b>开始菜单项</b>；安装不需要管理员权限。</li>
+      </ol>
+      <p class="note">
+        卸载：开始菜单搜索「课程日程表」→ 卸载，或「设置 → 应用 → 已安装的应用」里卸载。
+        卸载<b>不会删除</b>你的课表和设置。
+      </p>
+
+      <h2>二、第一次使用：导入课表</h2>
+      <ol>
+        <li>启动程序，卡片出现在桌面右下角。把鼠标移到卡片上，底部会浮出一排按钮。</li>
+        <li>点 <b>导入</b>，选择课表文件（<code>.ics</code> 结尾，例如 <code>课表-示例大学.ics</code>）。</li>
+        <li>导入成功后卡片立刻显示今天的课。程序会记住文件位置，以后自动加载，不用再导。</li>
+      </ol>
+
+      <h2>三、界面说明</h2>
+      <figure>
+        <img src="images/card.png" alt="小卡片界面" />
+        <figcaption>默认的小卡片：今天/明天的课一眼可见</figcaption>
+      </figure>
+      <table>
+        <tr><th>位置</th><th>含义</th></tr>
+        <tr><td>左上 <code>示例大学 | 9.24 周四</code></td><td>校名、日期、星期（星期为红色）</td></tr>
+        <tr><td>右上 <code>第 4 周</code></td><td>学期第几周，<b>点它可以修改开学日期</b></td></tr>
+        <tr><td><code>今天有 4 门课</code></td><td>当天课程数；今天没课时会自动显示「明天有 N 门课」并列出那天的课</td></tr>
+        <tr><td>粉色课程条</td><td>课程名（加粗），下面一行是<b>上课地点 · 教师</b>（例如 <code>A101 · 张明</code>），右侧是开始与结束时间</td></tr>
+        <tr><td>红色小字 <code>正在上课 · 09:45 下课</code></td><td>当前正在上的课，该行底色会加深</td></tr>
+        <tr><td>已结束的课</td><td>整行变淡</td></tr>
+      </table>
+
+      <h2>四、常用操作</h2>
+
+      <h3>展开完整周课表</h3>
+      <p>
+        点右上角的 <b>展开 ▾</b>，卡片变成整周课表（周一至周日 × 上课时间），今天那一列标红；
+        再点 <b>收起 ▴</b> 回到小卡片。
+      </p>
+      <figure>
+        <img src="images/week.png" alt="周课表" />
+        <figcaption>完整周课表</figcaption>
+      </figure>
+
+      <h3>查看其他周的日程</h3>
+      <p>
+        周课表左上角有翻页按钮：点 <b>‹</b> 看上一周，点 <b>›</b> 看下一周，中间的
+        <code>09/21 - 09/27 · 第 4 周</code> 会跟着变（开学前显示「未开学」，学期结束后显示「假期」）。
+        翻到别的周时右边会出现 <b>回到本周</b> 按钮，点一下立刻跳回本周；只有本周才把当天那一列标红。
+      </p>
+
+      <h3>需要时置顶</h3>
+      <p>
+        默认情况组件待在桌面层，<b>不会挡住其他软件</b>。需要它一直浮在最上面时，点「展开」左边那枚
+        <b>小钉子</b>：钉子变红表示已置顶，再点一下取消。
+      </p>
+      <h3>移动和缩放</h3>
+      <ul>
+        <li>移动：按住卡片<b>顶部两行</b>（校名那一行、「今天有 N 门课」那一行）拖动。</li>
+        <li>缩放：拖动窗口边缘。位置和大小会被记住，下次启动还在原处。</li>
+      </ul>
+
+      <h3>修改开学日期</h3>
+      <p>
+        点右上角的 <code>第 N 周</code> → 选第一周的周一 → 点「保存」。周次与周课表表头都会跟着变；
+        点「自动」则改回按课表里最早的一节课自动推断。
+      </p>
+
+      <h3>打开设置</h3>
+      <p>鼠标移到卡片上 → 点 <b>设置</b>；或右键系统托盘图标 →「打开设置…」。</p>
+      <figure>
+        <img src="images/settings.png" alt="设置窗口" />
+        <figcaption>设置窗口，改动即时生效</figcaption>
+      </figure>
+      <table>
+        <tr><th>分组</th><th>能改什么</th></tr>
+        <tr><td>课表文件</td><td>换课表文件、重新载入；显示路径、编码与导入时间</td></tr>
+        <tr><td>学期</td><td>第一周周一、卡片上显示的校名</td></tr>
+        <tr><td>显示</td><td>是否显示全天事件、只显示含关键词的课程、不透明度、是否置顶</td></tr>
+        <tr><td>启动</td><td>开机自动启动</td></tr>
+        <tr><td>数据</td><td>解析统计、打开数据目录、清空课表数据</td></tr>
+      </table>
+
+      <h3>托盘菜单</h3>
+      <p>
+        程序常驻系统托盘（图标是一张迷你课程卡片）。左键单击 = 显示/隐藏卡片，右键 = 菜单：隐藏/显示、
+        导入课表、重新载入课表、打开设置、置顶显示、开机自动启动、退出。
+      </p>
+      <p class="note">
+        任务栏右下角看不到图标是 Windows 11 的默认行为：新图标会被收进「^」折叠区。
+        打开「设置 → 个性化 → 任务栏 → 其他系统托盘图标」，把「课程日程表」打开即可常驻显示，
+        也可以直接从折叠区把图标拖到任务栏上。
+      </p>
+
+      <h2>五、课表会自动更新</h2>
+      <p>
+        课表有变动（调课、换教室）时，用<b>同一个文件名</b>重新导出、覆盖原来的 <code>.ics</code>，
+        组件会在约 0.3 秒后自动刷新，不需要重启，也不需要重新导入。若新文件损坏，组件会保留上一次的
+        课表并在底部提示，不会变成空白。也可以手动刷新：设置里的「重新载入」或托盘菜单的「重新载入课表」。
+      </p>
+
+      <h2>六、数据在哪里、怎么备份</h2>
+      <p>所有设置与课表数据都在 <code>%APPDATA%\class-calendar\</code>（地址栏粘贴回车即可打开，或用设置里的「打开数据目录」）。</p>
+      <table>
+        <tr><th>文件</th><th>内容</th></tr>
+        <tr><td><code>settings.json</code></td><td>窗口位置大小、开学日期、校名、不透明度、是否置顶、开机自启等</td></tr>
+        <tr><td><code>schedule.json</code></td><td>解析后的课表数据</td></tr>
+        <tr><td><code>backup\</code></td><td>每次导入前的上一份课表（保留最近 5 份）</td></tr>
+      </table>
+      <p>换电脑时，把整个 <code>class-calendar</code> 文件夹拷过去即可恢复；也可以只保留 <code>.ics</code> 文件重新导入一次，更干净。</p>
+
+      <h2>七、常见问题</h2>
+      <dl class="faq">
+        <dt>任务栏里找不到程序图标？</dt>
+        <dd>设计如此——组件只在桌面悬浮，不占用任务栏。请从桌面、开始菜单或系统托盘打开。</dd>
+        <dt>周次显示不对（例如显示「未开学」）？</dt>
+        <dd>点右上角 <code>第 N 周</code>，把第一周周一改成你校历上的日期，点保存。</dd>
+        <dt>今天没课，为什么显示的是明天的课？</dt>
+        <dd>这是故意设计的：今天没课时自动展示下一个有课的日子，标题会写明「明天有 N 门课」。</dd>
+        <dt>某节课没显示出来？</dt>
+        <dd>检查：① 设置里「只显示含关键词的课程」是否填了内容；② 是否为全天事件且关闭了「显示全天事件」；③ 课表文件里是否包含这节课。</dd>
+        <dt>教室或教师显示不全？</dt>
+        <dd>不同教务系统导出的字段格式不同，程序会尽量从「节次/教室/教师」三行里识别，识别不到的部分留空，不会显示错误内容。</dd>
+        <dt>想看下周、下下周的课？</dt>
+        <dd>展开成周课表后，用左上角的 <b>‹ ›</b> 翻页；点「回到本周」随时跳回本周。</dd>
+        <dt>卡片上显示的地点不对？</dt>
+        <dd>地点取自课表文件的 <code>LOCATION</code> 字段（教务系统导出的教室）。如果导出文件里教室为空，这里只显示教师；重新导出一次课表即可更新。</dd>
+        <dt>课表文件被删了或挪走了？</dt>
+        <dd>程序会提示读取失败并继续用上一次的数据，重新导入新位置的 <code>.ics</code> 即可。</dd>
+        <dt>开机没有自动启动？</dt>
+        <dd>在设置里勾选「开机自动启动」；如果之后移动过程序位置，重新勾一次。</dd>
+        <dt>想临时露出桌面壁纸？</dt>
+        <dd>托盘菜单点「隐藏组件」，需要时再点「显示组件」。</dd>
+      </dl>
+
+      <h2>八、卸载</h2>
+      <p>
+        开始菜单 → 右键「课程日程表」→ 卸载，或「设置 → 应用 → 已安装的应用」里卸载。
+        卸载不会删除 <code>%APPDATA%\class-calendar</code>，需要彻底清理时手动删除该文件夹。
+      </p>
+    </main>
+  </body>
+</html>

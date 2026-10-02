@@ -1,0 +1,10 @@
+# 换行符策略：仓库内统一按 LF 存储，检出时由 Git 按平台处理
+* text=auto
+
+# 二进制文件不做行尾与编码转换
+*.png binary
+*.ico binary
+*.exe binary
+
+# 交给 Git 识别为文本，避免被当成二进制
+*.ics text

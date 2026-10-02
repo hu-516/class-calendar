@@ -1,0 +1,602 @@
+* {
+  box-sizing: border-box;
+}
+
+/* hidden 属性必须能压过下面各处的 display 规则，否则两个视图会同时渲染 */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  /* 给卡片投影留出边距，否则投影会被窗口边缘裁掉 */
+  padding: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  user-select: none;
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* 头部：校名 | 日期 周几        第 N 周 */
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex: none;
+  /* 只有顶部两行是拖拽区：Windows 下拖拽区会吞掉鼠标事件，
+     整卡可拖会导致悬停按钮、列表滚动全部失效 */
+  -webkit-app-region: drag;
+}
+
+.head__left {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.head__school,
+.head__date,
+.head__weekday,
+.head__week {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.head__school {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.head__sep {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+.head__weekday {
+  color: var(--accent);
+}
+
+.head__week {
+  flex: none;
+  /* 点它可以改开学日期，因此不能落在拖拽区里 */
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin: -3px -8px;
+}
+
+.head__week:hover {
+  background: var(--surface-hover);
+}
+
+/* 头部右侧：展开按钮 + 第 N 周 */
+.head__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  -webkit-app-region: no-drag;
+}
+
+.head__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.head__toggle:hover {
+  background: #fbdbdf;
+}
+
+.head__toggle:active {
+  transform: scale(0.97);
+}
+
+.head__toggle-icon {
+  font-size: 10px;
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+/* 置顶按钮：小圆形钉子，未置顶时灰钉斜放，置顶后红钉正放 */
+.head__pin {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.head__pin:hover {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+
+.head__pin:active {
+  transform: scale(0.94);
+}
+
+.head__pin svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.head__pin--active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.head__pin--active svg {
+  transform: rotate(0deg);
+}
+
+/* 开学日期编辑面板 */
+.term-editor {
+  position: absolute;
+  top: 46px;
+  right: var(--space-4);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: #ffffff;
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  -webkit-app-region: no-drag;
+}
+
+.term-editor__label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.term-editor__input {
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  padding: 4px 6px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.term-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.term-editor__btn {
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.term-editor__btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.term-editor__btn:hover {
+  filter: brightness(0.96);
+}
+
+/* 说明行 */
+.compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex: none;
+  margin-top: 2px;
+  -webkit-app-region: drag;
+}
+
+.summary__text {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+}
+
+.summary__chip {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.summary__chip:empty {
+  display: none;
+}
+
+/* 课程行 */
+.courses {
+  flex: 1;
+  margin: 0;
+  padding: 0 2px 12px 0;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 0;
+}
+
+.courses::-webkit-scrollbar {
+  width: 4px;
+}
+
+.courses::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 2px;
+}
+
+.course {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 9px 14px 9px 20px;
+  border-radius: var(--radius-row);
+  background: var(--accent-soft);
+  flex: none;
+}
+
+.course--current {
+  background: var(--accent-soft-strong);
+}
+
+.course--past {
+  opacity: 0.5;
+}
+
+.course__bar {
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 7px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.course__info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.course__title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course__sub {
+  font-size: var(--font-size-lg);
+  line-height: 1.3;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course__times {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex: none;
+}
+
+.course__start {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+.course__end {
+  font-size: var(--font-size-lg);
+  line-height: 1.3;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.compact__empty {
+  margin: auto 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* 周课表 */
+.week {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 0;
+}
+
+.week__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  flex: none;
+  -webkit-app-region: drag;
+}
+
+.week__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.week__range {
+  min-width: 150px;
+  text-align: center;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.week__step {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.week__step:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.week__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  -webkit-app-region: no-drag;
+}
+
+.week__today {
+  height: 22px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.week__today:hover {
+  background: #fbdbdf;
+}
+
+.week__grid {
+  flex: 1;
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.grid-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.grid-head--today {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.grid-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding-right: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+.grid-cell {
+  border-radius: 8px;
+  background: var(--surface-raised);
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.grid-cell--today {
+  background: var(--surface-today);
+}
+
+.slot-item {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 6px 4px 9px;
+  border-radius: 7px;
+  background: var(--slot-bg);
+  border-left: 3px solid var(--slot-accent);
+  overflow: hidden;
+}
+
+.slot-item--current {
+  background: var(--accent-soft-strong);
+}
+
+.slot-item__title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.slot-item__meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 底部：悬浮小药丸，默认隐藏，鼠标悬停卡片时才出现（不占布局高度） */
+.foot {
+  position: absolute;
+  right: var(--space-4);
+  bottom: calc(var(--space-3) - 6px);
+  max-width: calc(100% - var(--space-4) * 2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 4px 6px 4px 10px;
+  border-radius: var(--radius-control);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.card:hover .foot,
+.foot--always,
+.foot:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.foot__status {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.foot__notice {
+  color: var(--accent);
+}
+
+.foot__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  -webkit-app-region: no-drag;
+}
+
+.icon-btn {
+  height: 22px;
+  min-width: 22px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}

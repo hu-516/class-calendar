@@ -1,0 +1,73 @@
+{
+  "name": "class-calendar",
+  "version": "1.0.2",
+  "private": true,
+  "description": "Windows 桌面课程日程悬浮小组件",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "inspect:ics": "node tools/inspect-ics.js",
+    "icon": "node tools/make-icon.js",
+    "dist": "electron-builder --win nsis",
+    "dist:dir": "electron-builder --win --dir"
+  },
+  "keywords": [
+    "electron",
+    "widget",
+    "schedule"
+  ],
+  "license": "MIT",
+  "author": "hu-516",
+  "build": {
+    "appId": "com.classcalendar.desktop",
+    "productName": "课程日程表",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/main/win32-layer.ps1",
+        "to": "win32-layer.ps1"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "课程日程表-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "课程日程表",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "@touch4it/ical-timezones": "^1.9.0",
+    "ical.js": "^2.2.1"
+  }
+}

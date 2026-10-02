@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self'; script-src 'self'"
+    />
+    <title>课程日程表 · 设置</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/settings.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page__head">
+        <h1>课程日程表 · 设置</h1>
+        <p class="muted" id="summaryLine">未导入课表</p>
+      </header>
+
+      <section class="panel">
+        <h2>课表文件</h2>
+        <p class="path" id="icsPath">未导入</p>
+        <div class="actions">
+          <button class="btn btn--primary" id="importBtn" type="button">选择 ICS 文件…</button>
+          <button class="btn" id="reloadBtn" type="button">重新载入</button>
+        </div>
+        <p class="hint" id="fileMeta"></p>
+      </section>
+
+      <section class="panel">
+        <h2>学期</h2>
+        <div class="field">
+          <span class="field__label">第一周周一</span>
+          <span class="field__control">
+            <input type="date" id="termStart" />
+            <button class="btn btn--ghost" id="termAuto" type="button">自动</button>
+          </span>
+        </div>
+        <div class="field">
+          <span class="field__label">卡片上的校名</span>
+          <input type="text" id="schoolName" placeholder="留空则从文件名推断" />
+        </div>
+        <p class="hint">周次与「共 N 周」都按这个日期计算。</p>
+      </section>
+
+      <section class="panel">
+        <h2>显示</h2>
+        <label class="field field--switch">
+          <span class="field__label">显示全天事件</span>
+          <input type="checkbox" id="showAllDay" />
+        </label>
+        <div class="field">
+          <span class="field__label">只显示含关键词的课程</span>
+          <input type="text" id="keywordFilter" placeholder="逗号分隔，留空显示全部" />
+        </div>
+        <div class="field">
+          <span class="field__label">不透明度 <b id="opacityValue">100%</b></span>
+          <input type="range" id="opacity" min="40" max="100" step="1" />
+        </div>
+        <div class="field">
+          <span class="field__label">层级</span>
+          <select id="layerMode">
+            <option value="desktop">只放在桌面上（不挡其他应用）</option>
+            <option value="top">置顶显示（浮在其他窗口之上）</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>启动</h2>
+        <label class="field field--switch">
+          <span class="field__label">开机自动启动</span>
+          <input type="checkbox" id="autostart" />
+        </label>
+      </section>
+
+      <section class="panel">
+        <h2>数据</h2>
+        <p class="hint" id="dataMeta"></p>
+        <div class="actions">
+          <button class="btn" id="revealBtn" type="button">打开数据目录</button>
+          <button class="btn btn--danger" id="clearBtn" type="button">清空课表数据</button>
+        </div>
+      </section>
+
+      <footer class="page__foot">
+        <span id="version"></span>
+        <span class="toast" id="toast"></span>
+      </footer>
+    </main>
+    <script src="js/settings.js"></script>
+  </body>
+</html>
+
