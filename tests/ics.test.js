@@ -391,7 +391,7 @@ test('deriveDisplayName 从日历名 / 文件名推断干净的名字', () => {
     deriveDisplayName('HITA Aura 课表', 'HITA-Aura-2026-20272026秋季-课表'),
     'HITA Aura',
   );
-  assert.equal(deriveDisplayName(null, '日历-哈尔滨工业大学'), '哈尔滨工业大学');
+  assert.equal(deriveDisplayName(null, '日历-示例大学'), '示例大学');
   assert.equal(deriveDisplayName(null, '课表'), null);
   assert.equal(deriveDisplayName('示例大学 2026秋季', null), '示例大学');
 });
