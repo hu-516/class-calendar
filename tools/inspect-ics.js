@@ -30,7 +30,9 @@ function main() {
 
   const filePath = path.resolve(args.file);
   const { text, encoding, bytes } = readIcsFile(filePath);
-  const { events, meta, warnings } = expandIcs(text);
+  const { events, meta, warnings } = expandIcs(text, {
+    fileBaseName: path.basename(filePath, path.extname(filePath)),
+  });
 
   console.log(`文件：${filePath}`);
   console.log(`编码：${encoding}（${bytes} 字节）`);
@@ -42,6 +44,7 @@ function main() {
   console.log(`学期首周周一：${meta.termStartMonday}`);
   console.log(`学期周数：${meta.totalWeeks ?? '-'} 周`);
   console.log(`课程（${meta.courses.length} 门）：${meta.courses.join('、')}`);
+  console.log(`日历名：${meta.calendarName ?? '-'}    建议显示名：${meta.suggestedName ?? '-'}`);
   console.log(
     `时区：引用 ${meta.timezones.referenced.join(',') || '-'}` +
       ` / 文件内 ${meta.timezones.fromFile.join(',') || '-'}` +
@@ -79,12 +82,25 @@ function main() {
 
   console.log(`\n=== 前 ${args.limit} 条展开结果 ===`);
   for (const event of events.slice(0, args.limit)) {
+    const weeks = weeksLabel(event);
     console.log(
       `  ${event.start.slice(0, 16).replace('T', ' ')} ~ ${event.end.slice(11, 16)}  ${event.title}` +
         `${event.period ? `  ${event.period}` : ''}${event.room ? `  ${event.room}` : ''}` +
+        `${event.teacher ? `  ${event.teacher}` : ''}${weeks ? `  ${weeks}` : ''}` +
         `${event.overridden ? '  (调课)' : ''}`,
     );
   }
+}
+
+// 周次文案：优先用 ICS 里写的原文（如「第 4-17 周」），否则由周次数组拼出来
+function weeksLabel(event) {
+  if (event.weeksText) return event.weeksText.replace(/\s+/g, '');
+  if (Array.isArray(event.weeks) && event.weeks.length) {
+    const first = event.weeks[0];
+    const last = event.weeks[event.weeks.length - 1];
+    return event.weeks.length === 1 ? `第${first}周` : `第${first}-${last}周`;
+  }
+  return '';
 }
 
 main();

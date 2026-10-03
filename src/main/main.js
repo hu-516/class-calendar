@@ -7,7 +7,7 @@ const { execFile } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { readIcsFile, expandIcs } = require('./ics');
+const { readIcsFile, expandIcs, deriveDisplayName } = require('./ics');
 const { summarize, weekNumberFor, weekStartOf, toDateKey, shiftWeek, weekViewFor } = require('./schedule');
 const store = require('./store');
 const tray = require('./tray');
@@ -147,11 +147,12 @@ function computeSlotRows(events) {
 // 校名：优先用设置值，其次从课表文件名推断（「课表-示例大学.ics」-> 示例大学）
 function resolveSchoolName() {
   if (settings.schoolName) return settings.schoolName;
+  // 解析时已根据日历名 / 文件名推断出干净的名字（自动去掉「课表」「2026秋季」这类词）
+  if (schedule?.meta?.suggestedName) return schedule.meta.suggestedName;
   const filePath = settings.icsPath;
   if (!filePath) return '我的课表';
   const base = filePath.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
-  const parts = base.split(/[-—_]/).filter(Boolean);
-  return parts.length > 1 ? parts[parts.length - 1] : base;
+  return deriveDisplayName(null, base) || base;
 }
 
 // CLASS_CALENDAR_NOW 仅用于开发/冒烟验证时固定“当前时间”
@@ -325,7 +326,9 @@ function applyViewSize() {
 
 function importIcsFile(filePath) {
   const { text, encoding, bytes } = readIcsFile(filePath);
-  const { events, meta, warnings } = expandIcs(text);
+  const { events, meta, warnings } = expandIcs(text, {
+    fileBaseName: path.basename(filePath, path.extname(filePath)),
+  });
   schedule = {
     events,
     meta,

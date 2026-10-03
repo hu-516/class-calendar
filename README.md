@@ -36,6 +36,11 @@
 
 - 导入教务系统或课表工具导出的标准 `.ics` 文件；编码自动识别 **UTF-8(BOM) / UTF-8 / GBK**
 - **时区**：优先使用文件内自带的 `VTIMEZONE`；文件里没有时用离线时区数据兜底；`Z` 结尾的 UTC 会换算成本地时间
+- **教室 / 教师 / 节次 / 周次按四级优先级识别**，尽量兼容各家导出格式：
+  ① VEVENT 的 `X-` 自定义字段（如 `X-HITA-TEACHER`、`X-HITA-CLASSROOM`）→
+  ② `DESCRIPTION` 里的「标签：值」行（`教师：李科`、`周次：第 3 周`、`教室：B52`）→
+  ③ 位置式三行描述（`第1-2节 / B52 / 王忠英`）→ ④ `LOCATION` 字段（`B52` 或 `B52 王忠英`）。
+  「周次 / 学期」类信息会单独识别为周次（`weeks`），**不会**被误当成教室或教师。
 - **重复规则**完整展开：`RRULE`（每周、`INTERVAL` 隔周、`UNTIL`、`COUNT`、`BYDAY`）、`RDATE`
 - **停课与调课**：`EXDATE` 去掉停课的那一次；`RECURRENCE-ID` 覆盖项替换原课（换教室、改时间、改名）
 - **其它**：全天事件、跨天事件；缺少 `DTEND` 时按 `DURATION` 或默认 1 小时补齐
@@ -68,6 +73,8 @@
 - 开学第一周周一可手动指定（点卡片右上角「第 N 周」也能改），或按课表里最早的一节课自动推断；
   周次与「共 N 周」随之变化
 - 数据目录 `%APPDATA%\class-calendar\`，每次导入前自动备份上一份，保留最近 5 份
+- 卡片左上角显示名的推断顺序：设置里的 `schoolName` → ICS 的 `X-WR-CALNAME`
+  （自动去掉「课表」「日历」「2026秋季」这类通用词，例如「HITA Aura 课表」→「HITA Aura」）→ 文件名。
 
 ---
 
@@ -292,6 +299,8 @@ npm run inspect:ics -- "samples\课表-示例大学.ics"
       "room": "A101",
       "teacher": "张明",
       "period": "第1-2节",
+      "weeks": null,
+      "weeksText": null,
       "allDay": false,
       "recurring": true,
       "overridden": false,
@@ -338,6 +347,7 @@ npm run inspect:ics -- "samples\课表-示例大学.ics"
 | `id` | `uid@开始时间`；同一门重复课的不同次是不同的 id |
 | `room` / `teacher` | 从 `LOCATION` 与 `DESCRIPTION` 里识别出的教室与教师，识别不到时为 `null` |
 | `period` | 节次，如 `第3-4节`（同样来自 `DESCRIPTION`） |
+| `weeks` / `weeksText` | 周次：`weeks` 为数字数组（如 `[4,5,…,17]`），`weeksText` 为原始文本（如 `第 4-17 周`）；课表里没写则为 `null` |
 | `start` / `end` | 本地墙上时间，卡片与周课表用它显示 |
 | `startUtc` / `endUtc` | 同一时刻的 UTC 表示，用于排序与跨时区换算 |
 | `recurring` | 是否由重复规则展开而来 |

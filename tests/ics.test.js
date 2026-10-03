@@ -3,7 +3,13 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { expandIcs, decodeIcsBuffer, parseClassMeta } = require('../src/main/ics');
+const {
+  expandIcs,
+  decodeIcsBuffer,
+  parseClassMeta,
+  parseWeeks,
+  deriveDisplayName,
+} = require('../src/main/ics');
 const {
   weekNumberFor,
   weekStartOf,
@@ -281,24 +287,113 @@ test('parseClassMeta 能分别识别节次、教室、教师', () => {
     period: '第9-12节',
     room: 'A100',
     teacher: '张三',
+    weeks: null,
+    weeksText: null,
   });
   assert.deepEqual(parseClassMeta('', 'A101 张明'), {
     period: null,
     room: 'A101',
     teacher: '张明',
+    weeks: null,
+    weeksText: null,
   });
   // 教室为空的导出：LOCATION 只剩教师名，不能当成教室
   assert.deepEqual(parseClassMeta('第3 - 4节\n\n李华', ' 李华'), {
     period: '第3-4节',
     room: null,
     teacher: '李华',
+    weeks: null,
+    weeksText: null,
   });
   // 场地类教室没有数字，也要认出来
   assert.deepEqual(parseClassMeta('第5 - 6节\n体育馆\n赵敏', '体育馆 赵敏'), {
     period: '第5-6节',
     room: '体育馆',
     teacher: '赵敏',
+    weeks: null,
+    weeksText: null,
   });
+});
+
+// HITA Aura 这类导出：LOCATION 只有教室，DESCRIPTION 是「标签：值」，另有 X- 自定义字段
+const HITA_STYLE_EVENT = vevent([
+  'UID:math-1-li-ke-b42-1-1000-1145-3-1-0@hita-ios',
+  'SUMMARY:高等数学（1）',
+  'LOCATION:B42',
+  'DTSTART;TZID=Asia/Shanghai:20260914T100000',
+  'DTEND;TZID=Asia/Shanghai:20260914T114500',
+  'DESCRIPTION:教师：李科\\n周次：第 3 周\\n学期：2026-2027秋季\\n来源：HITA Aura 当前学期课表',
+  'X-HITA-CLASSROOM:B42',
+  'X-HITA-TEACHER:李科',
+  'X-HITA-WEEKS:3',
+  'RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=2;BYDAY=MO',
+]);
+
+test('标签式描述 + X- 自定义字段（HITA Aura 格式）', () => {
+  const { events } = expandIcs(buildCalendar([HITA_STYLE_EVENT]));
+  const [first] = events;
+  assert.equal(first.room, 'B42');
+  assert.equal(first.teacher, '李科');
+  assert.equal(first.period, null, '这种导出没有节次信息');
+  assert.deepEqual(first.weeks, [3]);
+  assert.equal(first.weeksText, '第 3 周');
+});
+
+test('「周次」不会被误判成教室（回归）', () => {
+  const { events } = expandIcs(buildCalendar([HITA_STYLE_EVENT]));
+  for (const event of events) {
+    assert.ok(!String(event.room ?? '').includes('周'), `教室不应是周次：${event.room}`);
+    assert.ok(!String(event.teacher ?? '').includes('周'), `教师不应是周次：${event.teacher}`);
+  }
+});
+
+test('只有标签式描述、没有 X- 字段时也能解析', () => {
+  const labeledOnly = vevent([
+    'UID:physics-1',
+    'SUMMARY:大学物理',
+    'LOCATION:A102',
+    'DTSTART;TZID=Asia/Shanghai:20260915T080000',
+    'DTEND;TZID=Asia/Shanghai:20260915T094000',
+    'DESCRIPTION:教师：张明\\n周次：第 4-17 周\\n学期：2026秋季',
+  ]);
+  const { events } = expandIcs(buildCalendar([labeledOnly]));
+  assert.equal(events[0].room, 'A102');
+  assert.equal(events[0].teacher, '张明');
+  assert.deepEqual(events[0].weeks, [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+});
+
+test('周次行存在时，LOCATION 仍能提供教室与教师', () => {
+  const event = vevent([
+    'UID:room-from-location',
+    'SUMMARY:程序设计基础',
+    'LOCATION:B203 王强',
+    'DTSTART;TZID=Asia/Shanghai:20260916T140000',
+    'DTEND;TZID=Asia/Shanghai:20260916T154000',
+    'DESCRIPTION:周次：第 3-5 周',
+  ]);
+  const { events } = expandIcs(buildCalendar([event]));
+  assert.equal(events[0].room, 'B203');
+  assert.equal(events[0].teacher, '王强');
+  assert.deepEqual(events[0].weeks, [3, 4, 5]);
+});
+
+test('parseWeeks 支持区间、列表与单周', () => {
+  assert.deepEqual(parseWeeks('第 3 周'), [3]);
+  assert.deepEqual(parseWeeks('第 4-8 周'), [4, 5, 6, 7, 8]);
+  assert.deepEqual(parseWeeks('1,3,5'), [1, 3, 5]);
+  assert.deepEqual(parseWeeks('第1-4周(单)'), [1, 2, 3, 4]);
+  assert.deepEqual(parseWeeks('4\\,5\\,6'), [4, 5, 6]);
+  assert.equal(parseWeeks(''), null);
+});
+
+test('deriveDisplayName 从日历名 / 文件名推断干净的名字', () => {
+  assert.equal(
+    deriveDisplayName('HITA Aura 课表', 'HITA-Aura-2026-20272026秋季-课表'),
+    'HITA Aura',
+  );
+  assert.equal(deriveDisplayName(null, '日历-哈尔滨工业大学'), '哈尔滨工业大学');
+  assert.equal(deriveDisplayName(null, '课表'), null);
+  assert.equal(deriveDisplayName('示例大学 2026秋季', null), '示例大学');
 });
 
 test('今天没课时展示下一个有课的日子', () => {

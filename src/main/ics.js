@@ -22,6 +22,23 @@ const PERIOD_LABEL = /^第\s*(\d+)\s*(?:[-–—~至]\s*(\d+))?\s*节/;
 const ROOM_HINT = /[\d]|楼|场|馆|区|室|房|教室|机房|实验室|中心/;
 // 教师姓名特征：2-4 个汉字（可带间隔号），且不像教室
 const TEACHER_NAME = /^[\u4e00-\u9fa5·]{2,4}(?:[,，、]\s*[\u4e00-\u9fa5·]{2,4})*$/;
+// 周次 / 学期类文本：这类内容绝不能当成教室或教师
+const WEEK_OR_TERM = /第\s*\d+\s*(?:[-–—~至到,，]\s*\d+\s*)*周|周次|周数|学期|学年|秋季|春季|夏季|冬季/;
+// 「标签：值」形式的描述行（中英文冒号都支持）
+const LABEL_LINE = /^([^：:]{1,12})[：:]\s*(.*)$/;
+// 描述里常见的标签 → 字段映射
+const LABEL_FIELDS = [
+  { field: 'teacher', pattern: /^(教师|老师|授课教师|任课教师|讲师|教师姓名|teacher|instructor)$/i },
+  {
+    field: 'room',
+    pattern: /^(教室|上课教室|教室名称|地点|上课地点|教学地点|场地|上课场地|room|classroom|location|venue|place)$/i,
+  },
+  { field: 'period', pattern: /^(节次|课节|上课节次|时间|period)$/i },
+  { field: 'weeks', pattern: /^(周次|周数|上课周次|周|weeks?)$/i },
+];
+// 推断展示名时要丢掉的通用词与学期/年份片段
+const GENERIC_NAME_WORD = /^(课表|课程表|日历|时间表|日程表|学期|class|classes|calendar|schedule|timetable|my|the)$/i;
+const SEASON_OR_YEAR_WORD = /^\d{4,8}\s*[秋冬春夏]?季?$|^\d{4}\s*[-–~至]\s*\d{4}$|^[秋冬春夏]季$/;
 
 function looksLikeRoom(text) {
   return ROOM_HINT.test(text);
@@ -140,50 +157,162 @@ function resolveEndTime(event, occurrenceStart) {
 
 // 从 DESCRIPTION（多为「第1 - 2节 / 教室 / 教师」三行）与 LOCATION（「A101 张明」）提取信息。
 // 注意：部分导出里教室为空、LOCATION 只剩教师名，因此不能盲取 LOCATION 的第一个词当教室。
-function parseClassMeta(description, location) {
+function looksLikeWeekOrTerm(text) {
+  return WEEK_OR_TERM.test(String(text || ''));
+}
+
+// 把「第3 - 4节」这类节次文本归一化成「第3-4节」
+function periodFromText(text) {
+  const matched = PERIOD_LABEL.exec(String(text || ''));
+  if (!matched) return null;
+  return matched[2] ? `第${matched[1]}-${matched[2]}节` : `第${matched[1]}节`;
+}
+
+// 从「第 4-17 周」「3,5,6」「第1-16周(单)」这类文本里取出周次数字
+function parseWeeks(text) {
+  const source = String(text || '');
+  if (!source) return null;
+  const weeks = new Set();
+  for (const matched of source.matchAll(/(\d{1,2})\s*[-–—~至到]\s*(\d{1,2})/g)) {
+    const from = Number(matched[1]);
+    const to = Number(matched[2]);
+    if (from >= 1 && to >= from && to <= 60) {
+      for (let week = from; week <= to; week += 1) weeks.add(week);
+    }
+  }
+  const rest = source.replace(/(\d{1,2})\s*[-–—~至到]\s*(\d{1,2})/g, ' ');
+  for (const matched of rest.matchAll(/\d{1,2}/g)) {
+    const week = Number(matched[0]);
+    if (week >= 1 && week <= 60) weeks.add(week);
+  }
+  return weeks.size ? [...weeks].sort((a, b) => a - b) : null;
+}
+
+// 从 VEVENT 的自定义属性里取教师 / 教室 / 周次，例如 HITA Aura 的
+// X-HITA-TEACHER、X-HITA-CLASSROOM、X-HITA-WEEKS
+function customFieldsOf(event) {
+  const component = event && event.component;
+  if (!component) return {};
+  const pick = (pattern) => {
+    for (const property of component.getAllProperties()) {
+      if (!pattern.test(property.name)) continue;
+      const value = String(property.getFirstValue() ?? '').trim();
+      if (value) return value;
+    }
+    return null;
+  };
+  return {
+    teacher: pick(/teacher|instructor|lecturer|professor/),
+    room: pick(/classroom|venue/),
+    weeks: pick(/weeks?|week_list|week_no/),
+  };
+}
+
+/*
+ * 解析教室 / 教师 / 节次 / 周次，按四级优先级依次尝试，谁先给出值就用谁：
+ *   1) VEVENT 的 X- 自定义属性（结构化，最可靠）
+ *   2) 「标签：值」形式的 DESCRIPTION（教师：李科 / 周次：第 3 周）
+ *   3) 位置式 DESCRIPTION（旧格式「第1-2节 / B52 / 王忠英」三行）
+ *   4) LOCATION 字段（可能只有教室，也可能是「教室 教师」）
+ *
+ * 关键防错：带标签的行不再参与位置式猜测，「周次 / 学期」类文本一律排除，
+ * 避免出现把「周次：第 4-17 周」当成教室的情况。
+ */
+function parseClassMeta(description, location, custom = {}) {
+  const result = { period: null, room: null, teacher: null, weeks: null, weeksText: null };
+
+  // 第 1 级：X- 结构化属性
+  if (custom.teacher) result.teacher = custom.teacher;
+  if (custom.room) result.room = custom.room;
+  if (custom.weeks) result.weeks = parseWeeks(custom.weeks);
+
+  // 第 2 级：标签式描述行
+  const positionalLines = [];
   const lines = String(description || '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
-
-  let period = null;
-  let room = null;
-  let teacher = null;
-
   for (const line of lines) {
-    const matched = PERIOD_LABEL.exec(line);
-    if (matched && !period) {
-      period = matched[2] ? `第${matched[1]}-${matched[2]}节` : `第${matched[1]}节`;
+    const labeled = LABEL_LINE.exec(line);
+    if (labeled) {
+      const label = labeled[1].trim();
+      const value = labeled[2].trim();
+      const hit = LABEL_FIELDS.find((entry) => entry.pattern.test(label));
+      if (hit && value) {
+        if (hit.field === 'teacher' && !result.teacher) result.teacher = value;
+        else if (hit.field === 'room' && !result.room) result.room = value;
+        else if (hit.field === 'period' && !result.period) {
+          result.period = periodFromText(value) || value;
+        } else if (hit.field === 'weeks') {
+          result.weeksText = value;
+          if (!result.weeks) result.weeks = parseWeeks(value);
+        }
+      }
       continue;
     }
-    if (!room && looksLikeRoom(line)) {
-      room = line;
+    positionalLines.push(line);
+  }
+
+  // 第 3 级：位置式描述行
+  for (const line of positionalLines) {
+    const period = periodFromText(line);
+    if (period && !result.period) {
+      result.period = period;
       continue;
     }
-    if (!teacher && looksLikeTeacher(line)) {
-      teacher = line;
+    if (looksLikeWeekOrTerm(line)) continue;
+    if (!result.room && looksLikeRoom(line)) {
+      result.room = line;
+      continue;
+    }
+    if (!result.teacher && looksLikeTeacher(line)) {
+      result.teacher = line;
     }
   }
 
+  // 第 4 级：LOCATION 兜底
   const locationParts = String(location || '')
     .trim()
     .split(/\s+/)
     .filter(Boolean);
   for (const part of locationParts) {
-    if (!room && looksLikeRoom(part)) {
-      room = part;
+    if (looksLikeWeekOrTerm(part)) continue;
+    if (!result.room && looksLikeRoom(part)) {
+      result.room = part;
       continue;
     }
-    if (!teacher && looksLikeTeacher(part)) {
-      teacher = part;
+    if (!result.teacher && looksLikeTeacher(part)) {
+      result.teacher = part;
     }
   }
-  // 兜底：只有一个词且既不像教室也不像人名时，仍按教室处理
-  if (!room && locationParts.length === 1 && !looksLikeTeacher(locationParts[0])) {
-    room = locationParts[0];
+  // 兜底：只有一个词、既不像人名也不像周次时，按教室处理
+  if (
+    !result.room &&
+    locationParts.length === 1 &&
+    !looksLikeTeacher(locationParts[0]) &&
+    !looksLikeWeekOrTerm(locationParts[0])
+  ) {
+    result.room = locationParts[0];
   }
 
-  return { period, room, teacher };
+  return result;
+}
+
+// 由日历名与文件名推断一个干净的展示名（用于卡片左上角）
+function deriveDisplayName(calendarName, fileBaseName) {
+  const tokens = [];
+  for (const source of [calendarName, fileBaseName]) {
+    if (!source) continue;
+    for (const piece of String(source).split(/[-—_|·/\s]+/)) {
+      const trimmed = piece.trim();
+      if (!trimmed) continue;
+      if (GENERIC_NAME_WORD.test(trimmed)) continue;
+      if (SEASON_OR_YEAR_WORD.test(trimmed)) continue;
+      tokens.push(trimmed);
+    }
+  }
+  const unique = [...new Set(tokens)];
+  return unique.length ? unique.join(' ') : null;
 }
 
 function buildOccurrence(event, occurrenceStart, extra = {}) {
@@ -192,7 +321,7 @@ function buildOccurrence(event, occurrenceStart, extra = {}) {
   const end = describeTime(occurrenceEnd);
   const description = event.description || '';
   const location = event.location || '';
-  const meta = parseClassMeta(description, location);
+  const meta = parseClassMeta(description, location, customFieldsOf(event));
 
   return {
     id: `${event.uid || 'event'}@${start.local}`,
@@ -203,6 +332,8 @@ function buildOccurrence(event, occurrenceStart, extra = {}) {
     room: meta.room,
     teacher: meta.teacher,
     period: meta.period,
+    weeks: meta.weeks,
+    weeksText: meta.weeksText,
     allDay: start.allDay,
     recurring: typeof event.isRecurring === 'function' ? event.isRecurring() : false,
     overridden: extra.overridden === true,
@@ -304,6 +435,8 @@ function expandIcs(text, options = {}) {
   }
 
   const timezones = registerTimezones(vcalendar);
+  // 日历自带的名字（X-WR-CALNAME），用来推断卡片上显示的校名/日历名
+  const calendarName = String(vcalendar.getFirstPropertyValue('x-wr-calname') || '').trim() || null;
 
   const overrides = new Map();
   const masters = [];
@@ -364,6 +497,8 @@ function expandIcs(text, options = {}) {
       termStartMonday,
       totalWeeks,
       courses: [...new Set(events.map((event) => event.title))],
+      calendarName,
+      suggestedName: deriveDisplayName(calendarName, options.fileBaseName ?? null),
       timezones,
       truncated: context.truncated,
     },
@@ -377,6 +512,9 @@ module.exports = {
   expandIcs,
   mondayOfDateKey,
   parseClassMeta,
+  parseWeeks,
+  customFieldsOf,
+  deriveDisplayName,
   formatLocal,
   looksLikeRoom,
   looksLikeTeacher,
